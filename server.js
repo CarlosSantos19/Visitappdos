@@ -6,6 +6,8 @@ const nodemailer = require('nodemailer');
 const http = require('http');
 const { Server } = require('socket.io');
 const session = require('express-session');
+require('dotenv').config();
+
 // const bcrypt = require('bcrypt'); // ← Activa esto si deseas encriptar contraseñas
 
 const app = express();
@@ -16,13 +18,13 @@ const io = new Server(server, {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   }
 });
-const port = 3001;
+const port = process.env.PORT || 3001;
 app.use(session({
-  secret: 'clave-secreta-segura', // Cámbiala por una más segura en producción
+  secret: process.env.SESSION_SECRET, // Cámbiala por una más segura en producción
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // true si usas HTTPS
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 }));
@@ -40,10 +42,10 @@ app.use('/public', express.static('public'));
 
 // Conexión a MySQL
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'renc1012339245',
-  database: 'Visitdata'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 db.connect(err => {
@@ -58,8 +60,8 @@ db.connect(err => {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'car02cbs@gmail.com',
-    pass: 'ashy kjyq qawr uajb' // contraseña de aplicación
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS // contraseña de aplicación
   }
 });
 
@@ -342,7 +344,7 @@ app.use(session({
 
 // Iniciar servidor
 server.listen(port, () => {
-  console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
+  console.log(`🚀 Servidor escuchando en el puerto ${port}`);
 });
 app.get('/api/me', (req, res) => {
     if (req.session.usuario) {
